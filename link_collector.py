@@ -28,11 +28,12 @@ def collect_links(url, pattern):
     # All array in one array
     quoted_values = flatten_array(quoted_values)
 
-    # Find correct links matching the regex pattern
-    links = check_pattern(quoted_values, pattern)
-
     # Get values if has / or \
-    links = filter_paths(links)
+    links = filter_paths(quoted_values)
+
+    # Find correct links matching the regex pattern
+    links = check_pattern(links, pattern)
+
 
     # Append the main URL to links that don't have the protocol (convert links to correct links)
     # # Append the main URL to links that don't have the protocol
@@ -85,7 +86,6 @@ def remove_links_with_errors(links):
     for link in links:
         try:
             response = requests.head(link)
-            print(response.status_code)
             response.raise_for_status()
             valid_links.append(link)
         except requests.exceptions.RequestException:
