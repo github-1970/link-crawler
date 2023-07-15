@@ -3,7 +3,7 @@ import requests
 import re
 import os
 import sys
-
+from urllib.parse import urlparse
 
 def collect_links(url, pattern):
     # Retrieve the web page content
@@ -88,6 +88,8 @@ def remove_links_with_errors(links):
 def filter_paths(array):
     filtered_array = [item for item in array if '/' in item or '\\' in item]
     return filtered_array
+
+
 
 def main():
     # Create the argument parser
