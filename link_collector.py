@@ -51,8 +51,13 @@ def collect_links(url, pattern):
 
     return links
 
-def save_links_to_file(links):
-    with open("public/links.txt", "w", encoding="utf-8") as file:
+def save_links_to_file(links, url, pattern):
+    host = extract_host(url)
+    folder_path = os.path.join("public", host, pattern)
+    os.makedirs(folder_path, exist_ok=True)
+    file_path = os.path.join(folder_path, "links.txt")
+
+    with open(file_path, "w", encoding="utf-8") as file:
         for link in links:
             file.write(link + "\n")
 
@@ -89,7 +94,10 @@ def filter_paths(array):
     filtered_array = [item for item in array if '/' in item or '\\' in item]
     return filtered_array
 
-
+def extract_host(url):
+    parsed_url = urlparse(url)
+    host = parsed_url.netloc
+    return host
 
 def main():
     # Create the argument parser
@@ -109,7 +117,7 @@ def main():
     # Display the results
     if links:
         print(f"Found {len(links)} link(s) matching the regex pattern.")
-        save_links_to_file(links)
+        save_links_to_file(links, args.url)
         print("Saving the links to links.txt file.")
     else:
         print("No links found matching the regex pattern.")
