@@ -21,23 +21,14 @@ def collect_links(url, pattern):
     main_url = parsed_url.group(1)
 
     # Find all value matching in the '' or ""
-    all_links = re.findall('\"(.*?)\"', response.text)
-    all_links.append( re.findall("\'(.*?)\'", response.text) )    
+    quoted_values = re.findall('\"(.*?)\"', response.text)
+    quoted_values.append( re.findall("\'(.*?)\'", response.text) )    
 
-    # Find all links matching the regex pattern
-    correct_links = []
-    for link in all_links:
-      link = re.findall(pattern, str(link))
-      if (len(link) >= 1):
-        correct_links.extend(link)
-        print(correct_links)
-        print()
+    # Find correct links matching the regex pattern
+    links = check_pattern(quoted_values, pattern)
 
-    print(correct_links)
+    print(links)
     sys.exit()
-    # flattened_arr = []
-    # for sublist in arr1:
-    #     flattened_arr.extend(sublist)
 
     # Append the main URL to links that don't have the protocol
     links = [main_url + link if not link.startswith(("http://", "https://")) else link for link in links]
@@ -49,6 +40,25 @@ def save_links_to_file(links):
     with open("links.txt", "w", encoding="utf-8") as file:
         for link in links:
             file.write(link + "\n")
+
+def check_pattern(quoted_values, pattern):
+  quoted_values = flatten_array(quoted_values)
+  links = []
+  for link in quoted_values:
+    link = re.findall(pattern, str(link))
+    if (len(link) >= 1):
+      links.extend(link)
+  return links
+
+def flatten_array(arr):
+    result = []
+    for item in arr:
+        if isinstance(item, list):
+            result.extend(flatten_array(item))
+        else:
+            result.append(item)
+    return result
+
 
 
 def main():
