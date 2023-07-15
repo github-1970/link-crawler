@@ -27,11 +27,18 @@ def collect_links(url, pattern):
     # Find correct links matching the regex pattern
     links = check_pattern(quoted_values, pattern)
 
-    print(links)
-    sys.exit()
-
-    # Append the main URL to links that don't have the protocol
-    links = [main_url + link if not link.startswith(("http://", "https://")) else link for link in links]
+    # Append the main URL to links that don't have the protocol (convert links to correct links)
+    # # Append the main URL to links that don't have the protocol
+    # temp_links = []
+    # for link in links:
+    #   if not link.startswith(("http://", "https://", "//")):
+    #     temp_links.append(main_url + link)
+    #   elif link.startswith("//"):
+    #     temp_links.append('http:' + link)  
+    #   else:
+    #     temp_links.append(link)
+    # links = temp_links
+    links = [main_url + link if not link.startswith(("http://", "https://", "//")) else 'https:' + link if link.startswith("//") else link for link in links]
 
     return links
 
