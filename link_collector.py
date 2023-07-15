@@ -4,6 +4,7 @@ import re
 import os
 import sys
 from urllib.parse import urlparse
+import base64
 
 def collect_links(url, pattern):
     # Retrieve the web page content
@@ -53,6 +54,7 @@ def collect_links(url, pattern):
 
 def save_links_to_file(links, url, pattern):
     host = extract_host(url)
+    pattern = generate_safe_folder_name(pattern)
     folder_path = os.path.join("public", host, pattern)
     os.makedirs(folder_path, exist_ok=True)
     file_path = os.path.join(folder_path, "links.txt")
@@ -99,6 +101,13 @@ def extract_host(url):
     host = parsed_url.netloc
     return host
 
+def generate_safe_folder_name(value):
+    if isinstance(value, str):
+        value = value.encode('utf-8')
+    safe_name = base64.b64encode(value).decode('utf-8')
+    safe_name = safe_name.replace('/', '_')
+    return safe_name
+
 def main():
     # Create the argument parser
     parser = argparse.ArgumentParser(description="Website Link Collector")
@@ -117,7 +126,7 @@ def main():
     # Display the results
     if links:
         print(f"Found {len(links)} link(s) matching the regex pattern.")
-        save_links_to_file(links, args.url)
+        save_links_to_file(links, args.url, args.pattern)
         print("Saving the links to links.txt file.")
     else:
         print("No links found matching the regex pattern.")
