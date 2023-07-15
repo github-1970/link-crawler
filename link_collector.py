@@ -55,7 +55,7 @@ def collect_links(url, pattern):
 def save_links_to_file(links, url, pattern):
     host = extract_host(url)
     pattern = generate_safe_folder_name(pattern)
-    folder_path = os.path.join("public", host, pattern)
+    folder_path = os.path.join("data", host, pattern)
     os.makedirs(folder_path, exist_ok=True)
     file_path = os.path.join(folder_path, "links.txt")
 
