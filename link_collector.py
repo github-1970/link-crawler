@@ -22,10 +22,16 @@ def collect_links(url, pattern):
 
     # Find all value matching in the '' or ""
     quoted_values = re.findall('\"(.*?)\"', response.text)
-    quoted_values.append( re.findall("\'(.*?)\'", response.text) )    
+    quoted_values.append( re.findall("\'(.*?)\'", response.text) )
+
+    # All array in one array
+    quoted_values = flatten_array(quoted_values)
 
     # Find correct links matching the regex pattern
     links = check_pattern(quoted_values, pattern)
+
+    # Get values if has / or \
+    links = filter_paths(links)
 
     # Append the main URL to links that don't have the protocol (convert links to correct links)
     # # Append the main URL to links that don't have the protocol
@@ -40,16 +46,17 @@ def collect_links(url, pattern):
     # links = temp_links
     links = [main_url + link if not link.startswith(("http://", "https://", "//")) else 'https:' + link if link.startswith("//") else link for link in links]
 
+    # Check Links is valid
+    # links = remove_links_with_errors(links)
+
     return links
 
-
 def save_links_to_file(links):
-    with open("links.txt", "w", encoding="utf-8") as file:
+    with open("public/links.txt", "w", encoding="utf-8") as file:
         for link in links:
             file.write(link + "\n")
 
 def check_pattern(quoted_values, pattern):
-  quoted_values = flatten_array(quoted_values)
   links = []
   for link in quoted_values:
     link = re.findall(pattern, str(link))
@@ -66,7 +73,21 @@ def flatten_array(arr):
             result.append(item)
     return result
 
+def remove_links_with_errors(links):
+    valid_links = []
+    for link in links:
+        try:
+            response = requests.head(link)
+            print(response.status_code)
+            response.raise_for_status()
+            valid_links.append(link)
+        except requests.exceptions.RequestException:
+            pass
+    return valid_links
 
+def filter_paths(array):
+    filtered_array = [item for item in array if '/' in item or '\\' in item]
+    return filtered_array
 
 def main():
     # Create the argument parser
@@ -80,9 +101,8 @@ def main():
     args = parser.parse_args()
 
     # Collect links
-    print("Collecting links from the main website...")
+    print("Collecting links from the webpage...")
     links = collect_links(args.url, args.pattern)
-    sys.exit()
 
     # Display the results
     if links:
