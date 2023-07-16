@@ -9,9 +9,7 @@ from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 
 
-def collect_links_from_quote(url, pattern):
-    # Send request and get response
-    response = get_response(url)
+def collect_links_from_quote(url, pattern, response):
     # Extract the protocol and host from the URL
     main_url = get_main_url(url)
 
@@ -101,10 +99,8 @@ def generate_safe_folder_name(value):
     return safe_name
 
 
-def collect_links(url, pattern):
-    response = get_response(url)
+def collect_links_from_tags(url, pattern, response):
     main_url = get_main_url(url)
-
     soup = BeautifulSoup(response.content, "html.parser")
 
     # Select tags containing links
@@ -161,8 +157,9 @@ def get_main_url(url):
 
 
 def collect_all_links(url, pattern):
-    all_links = collect_links(url, pattern)
-    all_links.extend(collect_links_from_quote(url, pattern))
+    response = get_response(url) 
+    all_links = collect_links_from_tags(url, pattern, response)
+    all_links.extend(collect_links_from_quote(url, pattern, response))
     return list(set(all_links))
 
 
