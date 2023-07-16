@@ -3,11 +3,13 @@ import requests
 import re
 import os
 import sys
-from urllib.parse import urlparse
 import base64
+from urllib.parse import urlparse
+from urllib.parse import urljoin
+from bs4 import BeautifulSoup
 
 
-def collect_links(url, pattern):
+def collect_links_from_quote(url, pattern):
     response = get_response(url)
 
     # Extract the protocol and host from the main URL
@@ -29,23 +31,17 @@ def collect_links(url, pattern):
     links = filter_paths(quoted_values)
 
     # Find correct links matching the regex pattern
-    links = check_pattern(links, pattern)
+    links = check_pattern(quoted_values, pattern)
 
     # Append the main URL to links that don't have the protocol (convert links to correct links)
-    links = [
-        main_url + link
-        if not link.startswith(("http://", "https://", "//"))
-        else "https:" + link
-        if link.startswith("//")
-        else link
-        for link in links
-    ]
+    links = set(urljoin(main_url, link) for link in links)
+
+    # links = [ main_url + link if not link.startswith(("http://", "https://", "//")) else "https:" + link if link.startswith("//") else link for link in links ]
 
     # Check Links is valid with send head request (time-consuming)
     # links = remove_links_with_errors(links)
 
     return links
-
 
 def save_links_to_file(links, url, pattern):
     host = extract_host(url)
@@ -57,7 +53,6 @@ def save_links_to_file(links, url, pattern):
     with open(file_path, "w", encoding="utf-8") as file:
         for link in links:
             file.write(link + "\n")
-
 
 def check_pattern(quoted_values, pattern):
     links = []
@@ -108,7 +103,6 @@ def generate_safe_folder_name(value):
     safe_name = safe_name.replace("/", "_")
     return safe_name
 
-
 def collect_links(url, pattern):
     response = get_response(url)
 
@@ -158,7 +152,6 @@ def collect_links(url, pattern):
     all_links.extend(link_tags)
     all_links.extend(script_tags)
     all_links.extend(base_tags)
-    all_links.extend(meta_tags)
     all_links.extend(a_links)
     all_links.extend(form_links)
     all_links.extend(area_links)
@@ -169,6 +162,11 @@ def collect_links(url, pattern):
     all_links.extend(source_links)
     all_links.extend(track_links)
     all_links.extend(embed_links)
+    for link in all_links:
+      print()
+      print(link)
+    # print(all_links)
+    sys.exit()
 
     return all_links
 
@@ -179,6 +177,14 @@ def get_response(url):
         print("Failed to retrieve the web page.")
         sys.exit()
     return response
+
+
+def collect_all_links(url, pattern):
+    all_links = collect_links(url, pattern)
+    all_links.extend(collect_links_from_quote(url, pattern))
+    print(all_links)
+    sys.exit()
+    return all_links
 
 
 def main():
@@ -194,7 +200,7 @@ def main():
 
     # Collect links
     print("Collecting links from the webpage...")
-    links = collect_links(args.url, args.pattern)
+    links = collect_all_links(args.url, args.pattern)
 
     # Display the results
     if links:
