@@ -36,7 +36,6 @@ def collect_links(url, pattern):
 
 
     # Append the main URL to links that don't have the protocol (convert links to correct links)
-    # # Append the main URL to links that don't have the protocol
     # temp_links = []
     # for link in links:
     #   if not link.startswith(("http://", "https://", "//")):
@@ -48,7 +47,7 @@ def collect_links(url, pattern):
     # links = temp_links
     links = [main_url + link if not link.startswith(("http://", "https://", "//")) else 'https:' + link if link.startswith("//") else link for link in links]
 
-    # Check Links is valid
+    # Check Links is valid with send head request (time-consuming)
     # links = remove_links_with_errors(links)
 
     return links
