@@ -113,7 +113,6 @@ def collect_links(url, pattern):
         "link",
         "script",
         "base",
-        "meta",
         "form",
         "area",
         "iframe",
