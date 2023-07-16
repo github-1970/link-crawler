@@ -15,10 +15,7 @@ def collect_links_from_quote(url, pattern, response):
 
     # Find all value matching in the '' or ""
     quoted_values = re.findall('"(.*?)"', response.text)
-    quoted_values.append(re.findall("'(.*?)'", response.text))
-
-    # All array in one array
-    quoted_values = flatten_array(quoted_values)
+    quoted_values.extend(re.findall("'(.*?)'", response.text))
 
     # Get values if has / or \
     links = filter_paths(quoted_values)
@@ -104,7 +101,28 @@ def collect_links_from_tags(url, pattern, response):
     soup = BeautifulSoup(response.content, "html.parser")
 
     # Select tags containing links
-    tags_with_links = [
+    tag_with_links = get_tag_with_links()
+
+    # Collect links from specified tags
+    links = []
+    for tag in tag_with_links:
+        elements = soup.find_all(tag)
+        for element in elements:
+            href = element.get("href")
+            src = element.get("src")
+            data_src = element.get("data-src")
+            if href and re.match(pattern, href):
+                links.append(urljoin(main_url, href))
+            if src and re.match(pattern, src):
+                links.append(urljoin(main_url, src))
+            if data_src and re.match(pattern, data_src):
+                links.append(urljoin(main_url, data_src))
+
+    return list(set(links))
+
+
+def get_tag_with_links():
+    return [
         "a",
         "link",
         "script",
@@ -120,20 +138,35 @@ def collect_links_from_tags(url, pattern, response):
         "embed",
     ]
 
-    # Collect links from specified tags
-    links = []
-    for tag in tags_with_links:
-        elements = soup.find_all(tag)
-        for element in elements:
-            href = element.get("href")
-            src = element.get("src")
-            data_src = element.get("data-src")
-            if href and re.match(pattern, href):
-                links.append(urljoin(main_url, href))
-            if src and re.match(pattern, src):
-                links.append(urljoin(main_url, src))
-            if data_src and re.match(pattern, data_src):
-                links.append(urljoin(main_url, data_src))
+
+def collect_links_with_main_url(url, pattern):
+    response = get_response(url)
+    main_url = get_main_url(url)
+    main_host = extract_host(url)
+    main_host_escaped = re.escape(main_host)
+    tag_with_links = get_tag_with_links()
+    soup = BeautifulSoup(response.content, "html.parser")
+
+    # "every things..." => "blog"
+    links = re.findall('"(.*?)"', response.text)
+    # 'every things...' => 'blog'
+    links.extend(re.findall("'(.*?)'", response.text))
+    # \/\/example.com...
+    links.extend(re.findall("\/\/[^\s>\"'\`]+", response.text))
+    # https//example.com... or http//example.com...
+    links.extend(re.findall("https?:\/\/[^\s>\"'\`]+", response.text))
+    # \/\/main_host_escaped...
+    links.extend(re.findall("//" + main_host_escaped + "[^\s>\"'\`]+", response.text))
+    # https://main_host_escaped... or http://main_host_escaped...
+    links.extend(
+        re.findall("https?:\/\/" + main_host_escaped + "[^\s>\"'\`]+", response.text)
+    )
+    links = [urljoin(main_url, link) for link in links]
+    # Find correct links matching the regex pattern
+    links = check_pattern(links, pattern)
+
+    # Get links from tags
+    links.extend(collect_links_from_tags(url, pattern, response))
 
     return list(set(links))
 
@@ -157,7 +190,7 @@ def get_main_url(url):
 
 
 def collect_all_links(url, pattern):
-    response = get_response(url) 
+    response = get_response(url)
     all_links = collect_links_from_tags(url, pattern, response)
     all_links.extend(collect_links_from_quote(url, pattern, response))
     return list(set(all_links))
@@ -168,15 +201,21 @@ def main():
     parser = argparse.ArgumentParser(description="Website Link Collector")
 
     # Add the command line arguments
-    parser.add_argument("-u", "--url", help="Main Website URL", required=True)
+    parser.add_argument("-u", "--url", help="Webpage url", required=True)
     parser.add_argument("-p", "--pattern", help="Regex Pattern", required=True)
+    parser.add_argument(
+        "-d", "--domain", help="Include website domain for internal links", action="store_true"
+    )
 
     # Parse the arguments
     args = parser.parse_args()
 
     # Collect links
     print("Collecting links from the webpage...")
-    links = collect_all_links(args.url, args.pattern)
+    if args.domain:
+        links = collect_links_with_main_url(args.url, args.pattern)
+    else:
+        links = collect_all_links(args.url, args.pattern)
 
     # Display the results
     if links:
