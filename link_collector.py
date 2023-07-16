@@ -10,15 +10,10 @@ from bs4 import BeautifulSoup
 
 
 def collect_links_from_quote(url, pattern):
+    # Send request and get response
     response = get_response(url)
-
-    # Extract the protocol and host from the main URL
-    parsed_url = re.match(r"(https?://[^/]+)", url)
-    if not parsed_url:
-        print("Invalid URL format.")
-        return []
-
-    main_url = parsed_url.group(1)
+    # Extract the protocol and host from the URL
+    main_url = get_main_url(url)
 
     # Find all value matching in the '' or ""
     quoted_values = re.findall('"(.*?)"', response.text)
@@ -34,7 +29,7 @@ def collect_links_from_quote(url, pattern):
     links = check_pattern(quoted_values, pattern)
 
     # Append the main URL to links that don't have the protocol (convert links to correct links)
-    links = set(urljoin(main_url, link) for link in links)
+    links = list(set(urljoin(main_url, link) for link in links))
 
     # links = [ main_url + link if not link.startswith(("http://", "https://", "//")) else "https:" + link if link.startswith("//") else link for link in links ]
 
@@ -42,6 +37,7 @@ def collect_links_from_quote(url, pattern):
     # links = remove_links_with_errors(links)
 
     return links
+
 
 def save_links_to_file(links, url, pattern):
     host = extract_host(url)
@@ -53,6 +49,7 @@ def save_links_to_file(links, url, pattern):
     with open(file_path, "w", encoding="utf-8") as file:
         for link in links:
             file.write(link + "\n")
+
 
 def check_pattern(quoted_values, pattern):
     links = []
@@ -103,72 +100,48 @@ def generate_safe_folder_name(value):
     safe_name = safe_name.replace("/", "_")
     return safe_name
 
+
 def collect_links(url, pattern):
     response = get_response(url)
+    main_url = get_main_url(url)
 
     soup = BeautifulSoup(response.content, "html.parser")
 
-    # Select <link> tags
-    link_tags = soup.find_all("link", href=re.compile(pattern))
+    # Select tags containing links
+    tags_with_links = [
+        "a",
+        "link",
+        "script",
+        "base",
+        "meta",
+        "form",
+        "area",
+        "iframe",
+        "img",
+        "audio",
+        "video",
+        "source",
+        "track",
+        "embed",
+    ]
 
-    # Select <script> tags
-    script_tags = soup.find_all("script", src=re.compile(pattern))
+    # Collect links from specified tags
+    links = []
+    for tag in tags_with_links:
+        elements = soup.find_all(tag)
+        for element in elements:
+            href = element.get("href")
+            src = element.get("src")
+            data_src = element.get("data-src")
+            if href and re.match(pattern, href):
+                links.append(urljoin(main_url, href))
+            if src and re.match(pattern, src):
+                links.append(urljoin(main_url, src))
+            if data_src and re.match(pattern, data_src):
+                links.append(urljoin(main_url, data_src))
 
-    # Select <base> tags
-    base_tags = soup.find_all("base", href=re.compile(pattern))
+    return list(set(links))
 
-    # Select <a> tags
-    a_links = soup.find_all("a", href=re.compile(pattern))
-
-    # Select <form> tags
-    form_links = soup.find_all("form", action=re.compile(pattern))
-
-    # Select <area> tags
-    area_links = soup.find_all("area", href=re.compile(pattern))
-
-    # Select <iframe> tags
-    iframe_links = soup.find_all("iframe", src=re.compile(pattern))
-
-    # Select <img> tags
-    img_links = soup.find_all("img", src=re.compile(pattern))
-
-    # Select <audio> tags
-    audio_links = soup.find_all("audio", src=re.compile(pattern))
-
-    # Select <video> tags
-    video_links = soup.find_all("video", src=re.compile(pattern))
-
-    # Select <source> tags
-    source_links = soup.find_all("source", src=re.compile(pattern))
-
-    # Select <track> tags
-    track_links = soup.find_all("track", src=re.compile(pattern))
-
-    # Select <embed> tags
-    embed_links = soup.find_all("embed", src=re.compile(pattern))
-
-    # Combine all links
-    all_links = []
-    all_links.extend(link_tags)
-    all_links.extend(script_tags)
-    all_links.extend(base_tags)
-    all_links.extend(a_links)
-    all_links.extend(form_links)
-    all_links.extend(area_links)
-    all_links.extend(iframe_links)
-    all_links.extend(img_links)
-    all_links.extend(audio_links)
-    all_links.extend(video_links)
-    all_links.extend(source_links)
-    all_links.extend(track_links)
-    all_links.extend(embed_links)
-    for link in all_links:
-      print()
-      print(link)
-    # print(all_links)
-    sys.exit()
-
-    return all_links
 
 def get_response(url):
     # Retrieve the web page content
@@ -179,12 +152,19 @@ def get_response(url):
     return response
 
 
+def get_main_url(url):
+    parsed_url = re.match(r"(https?://[^/]+)", url)
+    if not parsed_url:
+        print("Invalid URL format.")
+        return []
+
+    return parsed_url.group(1)
+
+
 def collect_all_links(url, pattern):
     all_links = collect_links(url, pattern)
     all_links.extend(collect_links_from_quote(url, pattern))
-    print(all_links)
-    sys.exit()
-    return all_links
+    return list(set(all_links))
 
 
 def main():
