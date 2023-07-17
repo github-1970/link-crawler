@@ -9,6 +9,7 @@ from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 import shutil
 
+headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
 
 def collect_links_from_quote(url, pattern, response):
     # Extract the protocol and host from the URL
@@ -82,7 +83,7 @@ def remove_links_with_errors(links):
     valid_links = []
     for link in links:
         try:
-            response = requests.head(link)
+            response = requests.head(link, headers=headers)
             response.raise_for_status()
             valid_links.append(link)
         except requests.exceptions.RequestException:
@@ -192,7 +193,7 @@ def collect_links_with_main_url(url, pattern):
 
 def get_response(url):
     # Retrieve the web page content
-    response = requests.get(url)
+    response = requests.get(url, headers=headers)
     if response.status_code != 200:
         print("Failed to retrieve the web page.")
         sys.exit()
