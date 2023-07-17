@@ -21,11 +21,14 @@ def collect_links_from_quote(url, pattern, response):
     # Get values if has / or \
     links = filter_paths(quoted_values)
 
-    # Find correct links matching the regex pattern
-    links = check_pattern(quoted_values, pattern)
-
     # Append the main URL to links that don't have the protocol (convert links to correct links)
     links = list(set(urljoin(main_url, link) for link in links))
+
+    # Clear main url from links
+    links = [link.replace(main_url, '') for link in links]
+
+    # Find correct links matching the regex pattern
+    links = check_pattern(links, pattern)
 
     # links = [ main_url + link if not link.startswith(("http://", "https://", "//")) else "https:" + link if link.startswith("//") else link for link in links ]
 
@@ -52,10 +55,10 @@ def delete_directory(url, pattern):
     pattern = generate_safe_folder_name(pattern)
     folder_path = os.path.join("data", host, pattern)
     if os.path.exists(folder_path):
-      shutil.rmtree(folder_path)
-      return True
+        shutil.rmtree(folder_path)
+        return True
     else:
-      return False
+        return False
 
 
 def check_pattern(quoted_values, pattern):
@@ -216,10 +219,16 @@ def main():
     parser.add_argument("-u", "--url", help="Webpage url", required=True)
     parser.add_argument("-p", "--pattern", help="Regex Pattern", required=True)
     parser.add_argument(
-        "-d", "--domain", help="Include website domain for internal links", action="store_true"
+        "-d",
+        "--domain",
+        help="Include website domain for internal links",
+        action="store_true",
     )
     parser.add_argument(
-        "-c", "--clear-directory", help="Clear the directory if it already exists for this command", action="store_true"
+        "-c",
+        "--clear-directory",
+        help="Clear the directory if it already exists for this command",
+        action="store_true",
     )
 
     # Parse the arguments
@@ -227,8 +236,8 @@ def main():
 
     # Clear directory
     if args.clear_directory:
-      delete_directory(args.url, args.pattern)
-      print("The previous directory was deleted")
+        delete_directory(args.url, args.pattern)
+        print("The previous directory was deleted")
 
     # Collect links
     print("Collecting links from the webpage...")
