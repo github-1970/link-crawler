@@ -23,14 +23,13 @@ def collect_links_from_quote(url, pattern, response):
 
     # Append the main URL to links that don't have the protocol (convert links to correct links)
     links = list(set(urljoin(main_url, link) for link in links))
+    # links = [ main_url + link if not link.startswith(("http://", "https://", "//")) else "https:" + link if link.startswith("//") else link for link in links ]
 
     # Clear main url from links
     links = [link.replace(main_url, '') for link in links]
 
     # Find correct links matching the regex pattern
     links = check_pattern(links, pattern)
-
-    # links = [ main_url + link if not link.startswith(("http://", "https://", "//")) else "https:" + link if link.startswith("//") else link for link in links ]
 
     # Check Links is valid with send head request (time-consuming)
     # links = remove_links_with_errors(links)
@@ -126,6 +125,10 @@ def collect_links_from_tags(url, pattern, response):
             href = element.get("href")
             src = element.get("src")
             data_src = element.get("data-src")
+            href = clear_main_url(main_url, href)
+            src = clear_main_url(main_url, src)
+            data_src = clear_main_url(main_url, data_src)
+
             if href and re.match(pattern, href):
                 links.append(urljoin(main_url, href))
             if src and re.match(pattern, src):
@@ -209,6 +212,10 @@ def collect_all_links(url, pattern):
     all_links = collect_links_from_tags(url, pattern, response)
     all_links.extend(collect_links_from_quote(url, pattern, response))
     return list(set(all_links))
+
+def clear_main_url(main_url, link):
+  link = urljoin(main_url, link)
+  return link.replace(main_url, '')
 
 
 def main():
