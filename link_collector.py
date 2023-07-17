@@ -7,6 +7,7 @@ import base64
 from urllib.parse import urlparse
 from urllib.parse import urljoin
 from bs4 import BeautifulSoup
+import shutil
 
 
 def collect_links_from_quote(url, pattern, response):
@@ -224,15 +225,17 @@ def main():
     # Parse the arguments
     args = parser.parse_args()
 
+    # Clear directory
+    if args.clear_directory:
+      delete_directory(args.url, args.pattern)
+      print("The previous directory was deleted")
+
     # Collect links
     print("Collecting links from the webpage...")
     if args.domain:
         links = collect_links_with_main_url(args.url, args.pattern)
     else:
         links = collect_all_links(args.url, args.pattern)
-
-    if args.clear_directory:
-      delete_directory(args.url, args.pattern)
 
     # Display the results
     if links:
