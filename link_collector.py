@@ -21,20 +21,19 @@ def collect_links_from_quote(url, pattern, response):
     # Get values if has / or \
     links = filter_paths(quoted_values)
 
-    # Append the main URL to links that don't have the protocol (convert links to correct links)
-    links = list(set(urljoin(main_url, link) for link in links))
-    # links = [ main_url + link if not link.startswith(("http://", "https://", "//")) else "https:" + link if link.startswith("//") else link for link in links ]
-
     # Clear main url from links
-    links = [link.replace(main_url, '') for link in links]
+    links = [clear_main_url(main_url, link) for link in links]
 
     # Find correct links matching the regex pattern
     links = check_pattern(links, pattern)
 
+    # Append the main url to links that don't have the main url (convert links to correct links)
+    links = [urljoin(main_url, link) for link in links]
+
     # Check Links is valid with send head request (time-consuming)
     # links = remove_links_with_errors(links)
 
-    return links
+    return list(set(links))
 
 
 def save_links_to_file(links, url, pattern):
@@ -125,6 +124,8 @@ def collect_links_from_tags(url, pattern, response):
             href = element.get("href")
             src = element.get("src")
             data_src = element.get("data-src")
+
+            # Clear main url from links
             href = clear_main_url(main_url, href)
             src = clear_main_url(main_url, src)
             data_src = clear_main_url(main_url, data_src)
@@ -209,13 +210,40 @@ def get_main_url(url):
 
 def collect_all_links(url, pattern):
     response = get_response(url)
-    all_links = collect_links_from_tags(url, pattern, response)
-    all_links.extend(collect_links_from_quote(url, pattern, response))
+    all_links = collect_links_from_quote(url, pattern, response)
+    all_links.extend(collect_links_from_tags(url, pattern, response))
+    all_links.extend(collect_links_from_text(url, pattern, response))
     return list(set(all_links))
 
+
 def clear_main_url(main_url, link):
-  link = urljoin(main_url, link)
-  return link.replace(main_url, '')
+    link = urljoin(main_url, link)
+    return link.replace(main_url, "")
+
+
+def collect_links_from_text(url, pattern, response):
+    main_url = get_main_url(url)
+    main_host = extract_host(url)
+    main_host_escaped = re.escape(main_host)
+    tag_with_links = get_tag_with_links()
+    soup = BeautifulSoup(response.content, "html.parser")
+
+    links = []
+    # \/\/example.com...
+    links.extend(re.findall("\/\/[^\s>\"'\`]+", response.text))
+    # https//example.com... or http//example.com...
+    links.extend(re.findall("https?:\/\/[^\s>\"'\`]+", response.text))
+
+    # Clear main url from links
+    links = [clear_main_url(main_url, link) for link in links]
+
+    # Find correct links matching the regex pattern
+    links = check_pattern(links, pattern)
+
+    # Append the main url to links that don't have the url (convert links to correct links)
+    links = [urljoin(main_url, link) for link in links]
+
+    return list(set(links))
 
 
 def main():
