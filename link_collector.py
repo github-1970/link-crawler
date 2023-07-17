@@ -46,7 +46,7 @@ def save_links_to_file(links, url, pattern):
             file.write(link + "\n")
 
 
-def delete_folder(url, pattern):
+def delete_directory(url, pattern):
     host = extract_host(url)
     pattern = generate_safe_folder_name(pattern)
     folder_path = os.path.join("data", host, pattern)
@@ -217,6 +217,9 @@ def main():
     parser.add_argument(
         "-d", "--domain", help="Include website domain for internal links", action="store_true"
     )
+    parser.add_argument(
+        "-c", "--clear-directory", help="Clear the directory if it already exists for this command", action="store_true"
+    )
 
     # Parse the arguments
     args = parser.parse_args()
@@ -228,7 +231,8 @@ def main():
     else:
         links = collect_all_links(args.url, args.pattern)
 
-    
+    if args.clear_directory:
+      delete_directory(args.url, args.pattern)
 
     # Display the results
     if links:
