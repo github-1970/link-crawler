@@ -46,6 +46,17 @@ def save_links_to_file(links, url, pattern):
             file.write(link + "\n")
 
 
+def delete_folder(url, pattern):
+    host = extract_host(url)
+    pattern = generate_safe_folder_name(pattern)
+    folder_path = os.path.join("data", host, pattern)
+    if os.path.exists(folder_path):
+      shutil.rmtree(folder_path)
+      return True
+    else:
+      return False
+
+
 def check_pattern(quoted_values, pattern):
     links = []
     for link in quoted_values:
@@ -216,6 +227,8 @@ def main():
         links = collect_links_with_main_url(args.url, args.pattern)
     else:
         links = collect_all_links(args.url, args.pattern)
+
+    
 
     # Display the results
     if links:
