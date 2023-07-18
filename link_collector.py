@@ -9,7 +9,10 @@ from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 import shutil
 
-headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
+headers = {
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36"
+}
+
 
 def collect_links_from_quote(url, pattern, response):
     # Extract the protocol and host from the URL
@@ -50,14 +53,19 @@ def save_links_to_file(links, url, pattern):
 
 
 def delete_directory(url, pattern):
-    host = extract_host(url)
-    pattern = generate_safe_folder_name(pattern)
-    folder_path = os.path.join("data", host, pattern)
-    if os.path.exists(folder_path):
+    folder_path = directory_exists(url, pattern)
+    if folder_path:
         shutil.rmtree(folder_path)
         return True
     else:
         return False
+
+
+def directory_exists(url, pattern):
+    host = extract_host(url)
+    pattern = generate_safe_folder_name(pattern)
+    folder_path = os.path.join("data", host, pattern)
+    return folder_path if os.path.exists(folder_path) else False
 
 
 def check_pattern(quoted_values, pattern):
