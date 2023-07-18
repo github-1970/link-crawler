@@ -9,6 +9,15 @@ from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 import shutil
 
+# Color codes for print messages
+class Colors:
+    SUCCESS = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    INFO = '\033[94m'
+    ENDC = '\033[0m'
+
+
 headers = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36"
 }
@@ -203,7 +212,7 @@ def get_response(url):
     # Retrieve the web page content
     response = requests.get(url, headers=headers)
     if response.status_code != 200:
-        print("Failed to retrieve the web page.")
+        print(Colors.FAIL + "Failed to retrieve the web page." + Colors.ENDC)
         sys.exit()
     return response
 
@@ -211,7 +220,7 @@ def get_response(url):
 def get_main_url(url):
     parsed_url = re.match(r"(https?://[^/]+)", url)
     if not parsed_url:
-        print("Invalid URL format.")
+        print(Colors.FAIL + "Invalid URL format." + Colors.ENDC)
         return []
 
     return parsed_url.group(1)
@@ -219,6 +228,8 @@ def get_main_url(url):
 
 def collect_all_links(url, pattern):
     response = get_response(url)
+
+
     all_links = collect_links_from_quote(url, pattern, response)
     all_links.extend(collect_links_from_tags(url, pattern, response))
     all_links.extend(collect_links_from_text(url, pattern, response))
@@ -281,17 +292,17 @@ def main():
     # Clear directory
     if args.clear_directory:
         delete_directory(args.url, args.pattern)
-        print("The previous directory was deleted")
+        print(Colors.SUCCESS + "The previous directory was deleted" + Colors.ENDC)
 
     folder_path = directory_exists(args.url, args.pattern)
     if folder_path:
-        print("This command has already been executed!")
-        print("The output of the command is available in {path}".format(path= folder_path))
-        print("If you want to create a new output, use the -c or --clear-directory flag.")
+        print(Colors.WARNING + "This command has already been executed!" + Colors.ENDC)
+        print("The output of the command is available in: {info}{path}{endc}".format(path=folder_path, info=Colors.INFO, endc=Colors.ENDC))
+        print("If you want to create a new output, use the {info}-c{endc} or {info}--clear-directory{endc} flag.".format(info=Colors.INFO, endc=Colors.ENDC) )
         sys.exit()
 
     # Collect links
-    print("Collecting links from the webpage...")
+    print(Colors.SUCCESS + "Collecting links from the webpage..." + Colors.ENDC)
     if args.domain:
         links = collect_links_with_main_url(args.url, args.pattern)
     else:
@@ -299,11 +310,19 @@ def main():
 
     # Display the results
     if links:
-        print(f"Found {len(links)} link(s) matching the regex pattern.")
+        print(
+            Colors.SUCCESS
+            + f"Found {len(links)} link(s) matching the regex pattern."
+            + Colors.ENDC
+        )
         save_links_to_file(links, args.url, args.pattern)
-        print("Saving the links to links.txt file.")
+        print(Colors.SUCCESS + "Saving the links to links.txt file." + Colors.ENDC)
     else:
-        print("No links found matching the regex pattern.")
+        print(
+            Colors.WARNING
+            + "No links found matching the regex pattern."
+            + Colors.ENDC
+        )
         if os.path.exists("links.txt"):
             os.remove("links.txt")
 
