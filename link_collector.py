@@ -9,13 +9,14 @@ from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 import shutil
 
+
 # Color codes for print messages
 class Colors:
-    SUCCESS = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    INFO = '\033[94m'
-    ENDC = '\033[0m'
+    SUCCESS = "\033[92m"
+    WARNING = "\033[93m"
+    FAIL = "\033[91m"
+    INFO = "\033[94m"
+    ENDC = "\033[0m"
 
 
 headers = {
@@ -229,7 +230,6 @@ def get_main_url(url):
 def collect_all_links(url, pattern):
     response = get_response(url)
 
-
     all_links = collect_links_from_quote(url, pattern, response)
     all_links.extend(collect_links_from_tags(url, pattern, response))
     all_links.extend(collect_links_from_text(url, pattern, response))
@@ -276,13 +276,13 @@ def main():
     parser.add_argument(
         "-d",
         "--domain",
-        help="Include website domain for internal links",
+        help="Include website domain for internal links. By default, it deletes the domain name from internal links and then searches for the pattern",
         action="store_true",
     )
     parser.add_argument(
         "-c",
         "--clear-directory",
-        help="Clear the directory if it already exists for this command",
+        help="Clear the directory if it already exists for this command. By default, if the command is entered with a duplicate pattern and domain, the search is not performed",
         action="store_true",
     )
 
@@ -297,8 +297,16 @@ def main():
     folder_path = directory_exists(args.url, args.pattern)
     if folder_path:
         print(Colors.WARNING + "This command has already been executed!" + Colors.ENDC)
-        print("The output of the command is available in: {info}{path}{endc}".format(path=folder_path, info=Colors.INFO, endc=Colors.ENDC))
-        print("If you want to create a new output, use the {info}-c{endc} or {info}--clear-directory{endc} flag.".format(info=Colors.INFO, endc=Colors.ENDC) )
+        print(
+            "The output of the command is available in: {info}{path}{endc}".format(
+                path=folder_path, info=Colors.INFO, endc=Colors.ENDC
+            )
+        )
+        print(
+            "If you want to create a new output, use the {info}-c{endc} or {info}--clear-directory{endc} flag.".format(
+                info=Colors.INFO, endc=Colors.ENDC
+            )
+        )
         sys.exit()
 
     # Collect links
@@ -319,9 +327,7 @@ def main():
         print(Colors.SUCCESS + "Saving the links to links.txt file." + Colors.ENDC)
     else:
         print(
-            Colors.WARNING
-            + "No links found matching the regex pattern."
-            + Colors.ENDC
+            Colors.WARNING + "No links found matching the regex pattern." + Colors.ENDC
         )
         if os.path.exists("links.txt"):
             os.remove("links.txt")
