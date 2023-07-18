@@ -283,6 +283,13 @@ def main():
         delete_directory(args.url, args.pattern)
         print("The previous directory was deleted")
 
+    folder_path = directory_exists(args.url, args.pattern)
+    if folder_path:
+        print("This command has already been executed!")
+        print("The output of the command is available in {path}".format(path= folder_path))
+        print("If you want to create a new output, use the -c or --clear-directory flag.")
+        sys.exit()
+
     # Collect links
     print("Collecting links from the webpage...")
     if args.domain:
