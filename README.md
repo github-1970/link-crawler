@@ -47,7 +47,9 @@ To use the script, follow these steps:
    - If links matching the regex pattern are found, the script will save them to a `links.txt` file in the corresponding directory.
    - If no links are found, the script will display a message accordingly.
 
-Note: The script crawls webpages within the specified website by following links found in HTML tags such as `<a>`, `<link>`, `<script>`, `<base>`, `<form>`, and more. It searches for `href`, `src`, and `data-src` attributes in these tags to extract the links.
+Note: The script crawls webpages within the specified website by following links found in HTML tags such as `<a>`, `<link>`, `<script>`, `<base>`, `<form>`, and more (in all tags that contain links). It searches for `href`, `src`, and `data-src` attributes in these tags to extract the links.
+
+Note: this script finds any link anywhere on the webpage, even outside of the attributes of the tags.
 
 ## Examples
 
